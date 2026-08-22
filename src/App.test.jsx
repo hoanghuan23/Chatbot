@@ -121,4 +121,40 @@ describe('Soha chat UI', () => {
     expect(sourceLink).toHaveAttribute('target', '_blank')
     expect(sourceLink).toHaveTextContent('VnExpress+2')
   })
+
+  it('places each citation beside its source line in event sections', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        answer: [
+          'Sự kiện 1',
+          'Nội dung thứ nhất.',
+          'Nguồn: Báo Một',
+          '',
+          'Sự kiện 2',
+          'Nội dung thứ hai.',
+          'Nguồn: Báo Hai',
+        ].join('\n'),
+        count: 2,
+        results: [
+          { id: 'event-1', url: 'https://example.com/one' },
+          { id: 'event-2', url: 'https://example.org/two' },
+        ],
+      }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Hai sự kiện?{Enter}')
+
+    const firstSourceLink = await screen.findByRole('link', { name: 'Mở bài viết gốc trên Báo Một' })
+    const secondSourceLink = screen.getByRole('link', { name: 'Mở bài viết gốc trên Báo Hai' })
+    const firstSourceLine = firstSourceLink.closest('.answer-line')
+    const secondSourceLine = secondSourceLink.closest('.answer-line')
+
+    expect(firstSourceLine).toHaveTextContent('Nguồn: Báo Một+1')
+    expect(secondSourceLine).toHaveTextContent('Nguồn: Báo Hai+1')
+    expect(firstSourceLink).toHaveAttribute('href', 'https://example.com/one')
+    expect(secondSourceLink).toHaveAttribute('href', 'https://example.org/two')
+  })
 })
