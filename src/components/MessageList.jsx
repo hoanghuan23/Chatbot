@@ -1,4 +1,5 @@
-import EventSourceLink, { getEventSources } from './EventSourceLink'
+import { getEventSources } from '../utils/eventSources'
+import EventSourceLink from './EventSourceLink'
 
 function AssistantContent({ message }) {
   const sources = getEventSources(message.results)
