@@ -14,14 +14,27 @@ function AssistantContent({ message }) {
     if (/^\s*(?:[-*•]\s+|\d+[.)]\s+)/.test(line)) indexes.push(index)
     return indexes
   }, [])
-  const citationIndexes = sourceLineIndexes.length >= sources.length
+  const sourceCount = sources.reduce((count, source) => count + source.sourcePositions.length, 0)
+  const citationIndexes = sourceLineIndexes.length >= sourceCount
     ? sourceLineIndexes
     : itemIndexes
 
-  if (citationIndexes.length >= sources.length) {
-    const sourceByLine = new Map(citationIndexes.slice(0, sources.length).map((line, index) => [line, sources[index]]))
+  if (citationIndexes.length >= sourceCount) {
+    const sharedSources = sources.filter((source) => source.isSharedPlatform)
+    const sourceByLine = new Map()
+    const sharedSourceLines = new Set()
 
-    return lines.map((line, index) => {
+    sources.forEach((source) => {
+      source.sourcePositions.forEach((position) => {
+        const lineIndex = citationIndexes[position]
+        if (source.isSharedPlatform) sharedSourceLines.add(lineIndex)
+        else sourceByLine.set(lineIndex, source)
+      })
+    })
+
+    const renderedLines = lines.map((line, index) => {
+      if (sourceLineIndexes.length >= sourceCount && sharedSourceLines.has(index)) return null
+
       const source = sourceByLine.get(index)
       const sourceLine = source && line.match(/^(\s*(?:nguồn|source)\s*:\s*)(.*?)\s*$/i)
       const linkSource = sourceLine?.[2]
@@ -36,6 +49,23 @@ function AssistantContent({ message }) {
         </span>
       )
     })
+
+    if (!sharedSources.length) return renderedLines
+
+    return (
+      <>
+        {renderedLines}
+        {'\n\n'}
+        <span className="shared-event-sources">
+          <span>Nguồn chung:</span>{'\n'}
+          <span className="event-source-list">
+            {sharedSources.map((source) => (
+              <EventSourceLink source={source} key={`${source.platformId}-${source.url}`} />
+            ))}
+          </span>
+        </span>
+      </>
+    )
   }
 
   return (

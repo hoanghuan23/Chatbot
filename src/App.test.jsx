@@ -157,4 +157,44 @@ describe('Soha chat UI', () => {
     expect(firstSourceLink).toHaveAttribute('href', 'https://example.com/one')
     expect(secondSourceLink).toHaveAttribute('href', 'https://example.org/two')
   })
+
+  it('groups source lines when events have the same platform id', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        answer: [
+          'Sự kiện 1',
+          'Nội dung thứ nhất.',
+          'Nguồn: Thanh28',
+          '',
+          'Sự kiện 2',
+          'Nội dung thứ hai.',
+          'Nguồn: Thanh28',
+          '',
+          'Sự kiện 3',
+          'Nội dung thứ ba.',
+          'Nguồn: Thanh28',
+        ].join('\n'),
+        count: 3,
+        results: [
+          { id: 'event-1', platform_id: 'post-28', url: 'https://thanhnien.vn/post-28' },
+          { id: 'event-2', platform_id: 'post-28', url: 'https://thanhnien.vn/post-28' },
+          { id: 'event-3', platform_id: 'post-28', url: 'https://thanhnien.vn/post-28' },
+        ],
+      }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Ba sự kiện?{Enter}')
+
+    const sharedLabel = await screen.findByText('Nguồn chung:')
+    const sourceLink = screen.getByRole('link', { name: 'Mở bài viết gốc trên Thanh Niên' })
+
+    expect(sharedLabel.closest('.message')).toHaveTextContent('Sự kiện 1')
+    expect(screen.queryByText('Nguồn: Thanh28')).not.toBeInTheDocument()
+    expect(sourceLink).toHaveAttribute('href', 'https://thanhnien.vn/post-28')
+    expect(sourceLink).toHaveTextContent('Thanh Niên+1')
+    expect(document.querySelectorAll('.event-source-link')).toHaveLength(1)
+  })
 })
