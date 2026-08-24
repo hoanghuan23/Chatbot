@@ -10,7 +10,7 @@ const vietnameseDateTimeFormatter = new Intl.DateTimeFormat('en-GB', {
   hourCycle: 'h23',
 })
 
-export function formatVietnameseDateTime(value) {
+function formatVietnameseDateTime(value) {
   if (!value) return null
 
   const normalizedValue = typeof value === 'string'
