@@ -194,6 +194,52 @@ describe('Soha chat UI', () => {
     expect(screen.queryByRole('button', { name: /Xem 1 bài viết/ })).not.toBeInTheDocument()
   })
 
+  it('shows source information once for events sharing the same platform id', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        answer: 'Nội dung dự phòng',
+        count: 2,
+        results: [
+          {
+            event_key: 'shared-post-event-1',
+            description: 'Tổng thống Đài Loan tuyên bố khi tới thăm một hòn đảo.',
+            post: { platform_id: 'shared-post-24' },
+            sources: [{
+              source: 'BBC News Tiếng Việt',
+              url: 'https://example.com/shared-post',
+              posted_at: '2026-08-24T00:00:00',
+            }],
+          },
+          {
+            event_key: 'shared-post-event-2',
+            description: 'Ông đã dâng hoa tại công viên tưởng niệm.',
+            post: { platform_id: 'shared-post-24' },
+            sources: [{
+              source: 'BBC News Tiếng Việt',
+              url: 'https://example.com/shared-post',
+              posted_at: '2026-08-24T00:00:00',
+            }],
+          },
+        ],
+      }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Tin Đài Loan?{Enter}')
+
+    const firstEvent = (await screen.findByText('Sự kiện 1')).closest('.event-result')
+    const lastEvent = screen.getByText('Sự kiện 2').closest('.event-result')
+    expect(screen.getAllByText('1 bài viết đề cập')).toHaveLength(1)
+    expect(screen.getAllByText('Nguồn gần nhất:')).toHaveLength(1)
+    expect(screen.getAllByRole('link', { name: /BBC News Tiếng Việt/ })).toHaveLength(1)
+    expect(firstEvent.querySelector('.event-result-meta')).not.toBeInTheDocument()
+    expect(firstEvent.querySelector('.event-latest-source')).not.toBeInTheDocument()
+    expect(lastEvent.querySelector('.event-result-meta')).toBeInTheDocument()
+    expect(lastEvent.querySelector('.event-latest-source')).toBeInTheDocument()
+  })
+
   it('places each citation beside its source line in event sections', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,

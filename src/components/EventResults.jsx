@@ -68,9 +68,8 @@ function latestSource(sources) {
   }, null)
 }
 
-function EventResult({ event, index }) {
+function EventResult({ event, index, sources, showSourceInfo }) {
   const [expanded, setExpanded] = useState(false)
-  const sources = event.sources.filter((source) => source?.url)
   const latest = latestSource(sources) || event.post
   const dateRange = eventDateRange(sources)
   const count = sources.length
@@ -82,13 +81,15 @@ function EventResult({ event, index }) {
 
       <p className="event-result-description">{event.description}</p>
 
-      <div className="event-result-meta">
-        <Newspaper size={13} aria-hidden="true" />
-        <span>{count} bài viết đề cập</span>
-        {dateRange && <><span aria-hidden="true">·</span><span>{dateRange}</span></>}
-      </div>
+      {showSourceInfo && (
+        <div className="event-result-meta">
+          <Newspaper size={13} aria-hidden="true" />
+          <span>{count} bài viết đề cập</span>
+          {dateRange && <><span aria-hidden="true">·</span><span>{dateRange}</span></>}
+        </div>
+      )}
 
-      {latest?.url && (
+      {showSourceInfo && latest?.url && (
         <div className="event-latest-source">
           <span>Nguồn gần nhất:</span>
           <a href={latest.url} target="_blank" rel="noopener noreferrer">
@@ -99,7 +100,7 @@ function EventResult({ event, index }) {
         </div>
       )}
 
-      {count > 1 && (
+      {showSourceInfo && count > 1 && (
         <button
           className="event-sources-toggle"
           type="button"
@@ -113,7 +114,7 @@ function EventResult({ event, index }) {
         </button>
       )}
 
-      {expanded && (
+      {showSourceInfo && expanded && (
         <div className="event-sources-detail" id={panelId}>
           {sources.map((source, sourceIndex) => (
             <a
@@ -134,11 +135,41 @@ function EventResult({ event, index }) {
 }
 
 export default function EventResults({ results }) {
+  const sourceGroups = new Map()
+
+  results.forEach((event, index) => {
+    const platformId = event.post?.platform_id ?? event.platform_id
+    const groupKey = platformId == null
+      ? `event-${index}`
+      : `platform-${typeof platformId}-${String(platformId)}`
+    const group = sourceGroups.get(groupKey) || { lastIndex: index, sources: [] }
+    group.lastIndex = index
+    group.sources.push(...event.sources.filter((source) => source?.url))
+    sourceGroups.set(groupKey, group)
+  })
+
   return (
     <div className="event-results">
-      {results.map((event, index) => (
-        <EventResult event={event} index={index} key={event.event_key || index} />
-      ))}
+      {results.map((event, index) => {
+        const platformId = event.post?.platform_id ?? event.platform_id
+        const groupKey = platformId == null
+          ? `event-${index}`
+          : `platform-${typeof platformId}-${String(platformId)}`
+        const group = sourceGroups.get(groupKey)
+        const sources = [...new Map(
+          group.sources.map((source) => [source.url, source]),
+        ).values()]
+
+        return (
+          <EventResult
+            event={event}
+            index={index}
+            sources={sources}
+            showSourceInfo={group.lastIndex === index}
+            key={event.event_key || index}
+          />
+        )
+      })}
     </div>
   )
 }
