@@ -1,7 +1,22 @@
 import { getEventSources } from '../utils/eventSources'
+import EventResults from './EventResults'
 import EventSourceLink from './EventSourceLink'
 
+function hasStructuredEventResults(results) {
+  return Array.isArray(results)
+    && results.length > 0
+    && results.every((event) => (
+      event
+      && typeof event.description === 'string'
+      && Array.isArray(event.sources)
+    ))
+}
+
 function AssistantContent({ message }) {
+  if (hasStructuredEventResults(message.results)) {
+    return <EventResults results={message.results} />
+  }
+
   const sources = getEventSources(message.results)
 
   if (!sources.length) return message.content

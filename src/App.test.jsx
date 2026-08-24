@@ -119,7 +119,79 @@ describe('Soha chat UI', () => {
     const sourceLink = await screen.findByRole('link', { name: 'Mở bài viết gốc trên VnExpress' })
     expect(sourceLink).toHaveAttribute('href', 'https://vnexpress.net/newest-post')
     expect(sourceLink).toHaveAttribute('target', '_blank')
-    expect(sourceLink).toHaveTextContent('VnExpress+2')
+    expect(sourceLink).toHaveTextContent('VnExpress - 21/08/2026 15:00+2')
+  })
+
+  it('renders the structured backend event format and expands all source posts', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        answer: 'Nội dung dạng văn bản dự phòng',
+        count: 1,
+        results: [{
+          event_key: 'event-vetc',
+          description: 'VETC quyết định tạm dừng triển khai chính sách thu phí dịch vụ ví điện tử.',
+          post: {
+            source_name: 'Tuổi Trẻ',
+            url: 'https://example.com/latest',
+            posted_at: '2026-08-22T07:52:14',
+          },
+          sources: [
+            { source: 'Tuổi Trẻ', url: 'https://example.com/older', posted_at: '2026-08-20T06:08:16' },
+            { source: 'GIAO THÔNG VĂN MINH', url: 'https://example.com/latest', posted_at: '2026-08-22T07:52:14' },
+          ],
+        }],
+      }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Tin VETC?{Enter}')
+
+    expect(await screen.findByText('Sự kiện 1')).toBeInTheDocument()
+    expect(screen.getByText('2 bài viết đề cập')).toBeInTheDocument()
+    expect(screen.getByText('20/08 – 22/08/2026')).toBeInTheDocument()
+    expect(screen.getByText('Nguồn gần nhất:')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /GIAO THÔNG VĂN MINH/ })).toHaveAttribute(
+      'href',
+      'https://example.com/latest',
+    )
+
+    await user.click(screen.getByRole('button', { name: /Xem 2 bài viết/ }))
+
+    expect(screen.getByRole('link', { name: /Tuổi Trẻ/ })).toHaveAttribute(
+      'href',
+      'https://example.com/older',
+    )
+  })
+
+  it('hides the source list toggle when a structured event has only one post', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        answer: 'Nội dung dự phòng',
+        count: 1,
+        results: [{
+          event_key: 'single-post-event',
+          description: 'Sự kiện chỉ có một bài viết.',
+          sources: [{
+            source: 'Soha',
+            url: 'https://soha.vn/single-post',
+            posted_at: '2026-08-22T07:52:14',
+          }],
+        }],
+      }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Một bài viết?{Enter}')
+
+    expect(await screen.findByRole('link', { name: /^Soha 22\/08\/2026/ })).toHaveAttribute(
+      'href',
+      'https://soha.vn/single-post',
+    )
+    expect(screen.queryByRole('button', { name: /Xem 1 bài viết/ })).not.toBeInTheDocument()
   })
 
   it('places each citation beside its source line in event sections', async () => {
