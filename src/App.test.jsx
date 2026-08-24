@@ -106,7 +106,7 @@ describe('Soha chat UI', () => {
           id: 'event-4',
           posts: [
             { url: 'https://soha.vn/older-post', posted_at: '2026-08-20T08:00:00Z' },
-            { url: 'https://vnexpress.net/newest-post', posted_at: '2026-08-21T08:00:00Z' },
+            { url: 'https://vnexpress.net/newest-post', posted_at: '2026-08-21T10:00:00' },
           ],
         }],
       }),
@@ -119,7 +119,7 @@ describe('Soha chat UI', () => {
     const sourceLink = await screen.findByRole('link', { name: 'Mở bài viết gốc trên VnExpress' })
     expect(sourceLink).toHaveAttribute('href', 'https://vnexpress.net/newest-post')
     expect(sourceLink).toHaveAttribute('target', '_blank')
-    expect(sourceLink).toHaveTextContent('VnExpress+2')
+    expect(sourceLink).toHaveTextContent('VnExpress - 21/08/2026 17:00+2')
   })
 
   it('places each citation beside its source line in event sections', async () => {
