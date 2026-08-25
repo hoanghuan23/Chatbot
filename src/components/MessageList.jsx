@@ -99,7 +99,7 @@ function AssistantContent({ message }) {
   )
 }
 
-export default function MessageList({ messages }) {
+export default function MessageList({ messages, onLoadMore }) {
   return (
     <section className="message-list" aria-live="polite" aria-label="Current conversation">
       {messages.map((message) => (
@@ -107,9 +107,24 @@ export default function MessageList({ messages }) {
           className={`message ${message.role}${message.isError ? ' error' : ''}`}
           key={message.id}
         >
-          {message.role === 'assistant' && !message.isError
-            ? <AssistantContent message={message} />
-            : message.content}
+          {message.role === 'assistant' && !message.isError ? (
+            <>
+              <AssistantContent message={message} />
+              {message.hasMore && message.nextCursor && (
+                <button
+                  className="load-more-events"
+                  type="button"
+                  disabled={message.isLoadingMore}
+                  onClick={() => onLoadMore(message.id)}
+                >
+                  {message.isLoadingMore ? 'Đang tải...' : 'Xem tiếp'}
+                </button>
+              )}
+              {message.loadMoreError && (
+                <span className="load-more-error" role="alert">{message.loadMoreError}</span>
+              )}
+            </>
+          ) : message.content}
         </article>
       ))}
     </section>

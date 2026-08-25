@@ -169,6 +169,61 @@ describe('Soha chat UI', () => {
     )
   })
 
+  it('loads and appends the next page of events with the backend cursor', async () => {
+    const firstPage = Array.from({ length: 10 }, (_, index) => ({
+      event_key: `event-${index + 1}`,
+      description: `Nội dung sự kiện ${index + 1}`,
+      sources: [],
+    }))
+
+    fetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          answer: 'Trang sự kiện đầu tiên',
+          count: 10,
+          results: firstPage,
+          has_more: true,
+          next_cursor: 'cursor-page-2',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          answer: 'Trang sự kiện tiếp theo',
+          count: 2,
+          results: [
+            { event_key: 'event-11', description: 'Nội dung sự kiện 11', sources: [] },
+            { event_key: 'event-12', description: 'Nội dung sự kiện 12', sources: [] },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Danh sách sự kiện?{Enter}')
+    await user.click(await screen.findByRole('button', { name: 'Xem tiếp' }))
+
+    expect(await screen.findByText('Sự kiện 11')).toBeInTheDocument()
+    expect(screen.getByText('Nội dung sự kiện 12')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Xem tiếp' })).not.toBeInTheDocument()
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      '/api/chat',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          message: 'xem tiếp',
+          limit: 10,
+          cursor: 'cursor-page-2',
+        }),
+      }),
+    )
+  })
+
   it('hides the source list toggle when a structured event has only one post', async () => {
     fetch.mockResolvedValueOnce({
       ok: true,

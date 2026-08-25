@@ -8,7 +8,7 @@ import {
   UsersRound,
   X,
 } from 'lucide-react'
-import illuminatiLogo from '../image/Illuminati-Logo.png'
+import illuminatiLogo from '../image/seo.png'
 
 const navigation = [
   { label: 'Knowledge Base', icon: Box },

@@ -47,6 +47,8 @@ export default function App() {
           content: response.answer,
           count: response.count,
           results: response.results,
+          hasMore: response.has_more === true,
+          nextCursor: response.next_cursor,
         },
       ])
     } catch (error) {
@@ -60,6 +62,64 @@ export default function App() {
             isError: true,
           },
         ])
+      }
+    } finally {
+      if (activeRequestRef.current === controller) {
+        activeRequestRef.current = null
+        setIsSending(false)
+      }
+    }
+  }
+
+  const handleLoadMore = async (messageId) => {
+    if (isSending) return
+
+    const message = messages.find((item) => item.id === messageId)
+    if (!message?.hasMore || !message.nextCursor) return
+
+    const controller = new AbortController()
+    activeRequestRef.current = controller
+    setIsSending(true)
+    setMessages((current) => current.map((item) => (
+      item.id === messageId
+        ? { ...item, isLoadingMore: true, loadMoreError: null }
+        : item
+    )))
+
+    try {
+      const response = await sendChatMessage('xem tiếp', {
+        limit: 10,
+        cursor: message.nextCursor,
+        signal: controller.signal,
+      })
+
+      setMessages((current) => current.map((item) => {
+        if (item.id !== messageId) return item
+
+        const nextResults = Array.isArray(response.results) ? response.results : []
+        const currentResults = Array.isArray(item.results) ? item.results : []
+
+        return {
+          ...item,
+          count: currentResults.length + nextResults.length,
+          results: [...currentResults, ...nextResults],
+          hasMore: response.has_more === true,
+          nextCursor: response.next_cursor,
+          isLoadingMore: false,
+          loadMoreError: null,
+        }
+      }))
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        setMessages((current) => current.map((item) => (
+          item.id === messageId
+            ? {
+                ...item,
+                isLoadingMore: false,
+                loadMoreError: `Không thể xem tiếp: ${error.message}`,
+              }
+            : item
+        )))
       }
     } finally {
       if (activeRequestRef.current === controller) {
@@ -109,7 +169,7 @@ export default function App() {
           {messages.length === 0 ? (
             <WelcomePanel onSuggestionSelect={setDraft} />
           ) : (
-            <MessageList messages={messages} />
+            <MessageList messages={messages} onLoadMore={handleLoadMore} />
           )}
 
           <ChatComposer

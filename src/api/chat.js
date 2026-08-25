@@ -9,13 +9,16 @@ function getErrorMessage(payload, status) {
   return `Backend trả về HTTP ${status}`
 }
 
-export async function sendChatMessage(message, { limit = 10, signal } = {}) {
+export async function sendChatMessage(message, { limit = 10, cursor, signal } = {}) {
+  const body = { message, limit }
+  if (cursor) body.cursor = cursor
+
   const response = await fetch(CHAT_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message, limit }),
+    body: JSON.stringify(body),
     signal,
   })
 
