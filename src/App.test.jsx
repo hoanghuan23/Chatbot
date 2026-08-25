@@ -148,7 +148,11 @@ describe('Soha chat UI', () => {
 
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Tin VETC?{Enter}')
 
-    expect(await screen.findByText('Sự kiện 1')).toBeInTheDocument()
+    const firstEventTitle = await screen.findByText('Sự kiện 1')
+    const eventIntro = screen.getByText('Dưới đây là các sự kiện liên quan:')
+
+    expect(eventIntro).toBeInTheDocument()
+    expect(eventIntro.compareDocumentPosition(firstEventTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByText('2 bài viết đề cập')).toBeInTheDocument()
     expect(screen.getByText('20/08 – 22/08/2026')).toBeInTheDocument()
     expect(screen.getByText('Nguồn gần nhất:')).toBeInTheDocument()

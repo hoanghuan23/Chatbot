@@ -103,6 +103,7 @@ button { color: inherit; }
 .event-source-link:focus-visible { outline: 2px solid #0cbb72; outline-offset: 2px; }
 .event-source-count { color: #8b8e94; }
 
+.event-results-intro { margin: 0 0 16px; }
 .event-results { display: grid; gap: 0; }
 .event-result { padding: 2px 4px 18px; white-space: normal; }
 .event-result + .event-result { padding-top: 17px; border-top: 1px solid #e2e3e5; }

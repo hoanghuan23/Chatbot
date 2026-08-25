@@ -14,7 +14,12 @@ function hasStructuredEventResults(results) {
 
 function AssistantContent({ message }) {
   if (hasStructuredEventResults(message.results)) {
-    return <EventResults results={message.results} />
+    return (
+      <>
+        <p className="event-results-intro">Dưới đây là các sự kiện liên quan:</p>
+        <EventResults results={message.results} />
+      </>
+    )
   }
 
   const sources = getEventSources(message.results)
