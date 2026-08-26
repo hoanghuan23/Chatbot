@@ -74,10 +74,13 @@ function EventResult({ event, index, sources, showSourceInfo }) {
   const dateRange = eventDateRange(sources)
   const count = sources.length
   const panelId = `event-sources-${event.event_key || index}`
+  const title = typeof event.title === 'string' ? event.title.trim() : ''
 
   return (
     <section className="event-result">
-      <div className="event-result-title">Sự kiện {index + 1}</div>
+      <div className="event-result-title">
+        Sự kiện {index + 1}{title && `: ${title}`}
+      </div>
 
       <p className="event-result-description">{event.description}</p>
 

@@ -130,6 +130,7 @@ describe('Soha chat UI', () => {
         count: 1,
         results: [{
           event_key: 'event-vetc',
+          title: 'VETC tạm dừng thu phí ví điện tử',
           description: 'VETC quyết định tạm dừng triển khai chính sách thu phí dịch vụ ví điện tử.',
           post: {
             source_name: 'Tuổi Trẻ',
@@ -148,7 +149,7 @@ describe('Soha chat UI', () => {
 
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Tin VETC?{Enter}')
 
-    const firstEventTitle = await screen.findByText('Sự kiện 1')
+    const firstEventTitle = await screen.findByText('Sự kiện 1: VETC tạm dừng thu phí ví điện tử')
     const eventIntro = screen.getByText('Dưới đây là các sự kiện liên quan:')
 
     expect(eventIntro).toBeInTheDocument()
