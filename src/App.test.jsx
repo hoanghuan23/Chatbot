@@ -170,6 +170,64 @@ describe('Soha chat UI', () => {
     )
   })
 
+  it('sorts events on the same date by mention count, then by newest post', async () => {
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        answer: 'Nội dung dự phòng',
+        count: 4,
+        results: [
+          {
+            event_key: 'newest-one-mention',
+            title: 'Một lượt đề cập mới nhất',
+            description: 'Sự kiện có một lượt đề cập lúc 09:07.',
+            sources: [{ source: 'UFC', url: 'https://example.com/ufc', posted_at: '2026-08-26T02:07:00Z' }],
+          },
+          {
+            event_key: 'two-mentions-older',
+            title: 'Hai lượt đề cập cũ hơn',
+            description: 'Sự kiện có hai lượt đề cập lúc 08:14.',
+            sources: [
+              { source: 'CBS News', url: 'https://example.com/cbs', posted_at: '2026-08-26T01:14:00Z' },
+              { source: 'Soha', url: 'https://example.com/soha', posted_at: '2026-08-26T00:00:00Z' },
+            ],
+          },
+          {
+            event_key: 'two-mentions-newer',
+            title: 'Hai lượt đề cập mới hơn',
+            description: 'Sự kiện có hai lượt đề cập lúc 08:30.',
+            sources: [
+              { source: 'VnExpress', url: 'https://example.com/vne', posted_at: '2026-08-26T01:30:00Z' },
+              { source: 'Tuổi Trẻ', url: 'https://example.com/tuoitre', posted_at: '2026-08-25T23:00:00Z' },
+            ],
+          },
+          {
+            event_key: 'previous-day',
+            title: 'Ngày hôm trước',
+            description: 'Sự kiện thuộc ngày hôm trước.',
+            sources: [
+              { source: 'Nguồn 1', url: 'https://example.com/old-1', posted_at: '2026-08-25T15:00:00Z' },
+              { source: 'Nguồn 2', url: 'https://example.com/old-2', posted_at: '2026-08-25T14:00:00Z' },
+              { source: 'Nguồn 3', url: 'https://example.com/old-3', posted_at: '2026-08-25T13:00:00Z' },
+            ],
+          },
+        ],
+      }),
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Sắp xếp sự kiện?{Enter}')
+
+    const titles = await screen.findAllByText(/^Sự kiện \d+:/)
+    expect(titles.map((title) => title.textContent)).toEqual([
+      'Sự kiện 1: Hai lượt đề cập mới hơn',
+      'Sự kiện 2: Hai lượt đề cập cũ hơn',
+      'Sự kiện 3: Một lượt đề cập mới nhất',
+      'Sự kiện 4: Ngày hôm trước',
+    ])
+  })
+
   it('loads and appends the next page of events with the backend cursor', async () => {
     const firstPage = Array.from({ length: 10 }, (_, index) => ({
       event_key: `event-${index + 1}`,

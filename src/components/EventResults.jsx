@@ -68,6 +68,22 @@ function latestSource(sources) {
   }, null)
 }
 
+function uniqueSources(sources) {
+  return [...new Map(
+    sources.filter((source) => source?.url).map((source) => [source.url, source]),
+  ).values()]
+}
+
+function localDateSortValue(date) {
+  if (!date) return -Infinity
+
+  const parts = Object.fromEntries(
+    dateFormatter.formatToParts(date).map(({ type, value }) => [type, value]),
+  )
+
+  return Number(`${parts.year}${parts.month}${parts.day}`)
+}
+
 function EventResult({ event, index, sources, showSourceInfo }) {
   const [expanded, setExpanded] = useState(false)
   const latest = latestSource(sources) || event.post
@@ -145,34 +161,52 @@ export default function EventResults({ results }) {
     const groupKey = platformId == null
       ? `event-${index}`
       : `platform-${typeof platformId}-${String(platformId)}`
-    const group = sourceGroups.get(groupKey) || { lastIndex: index, sources: [] }
-    group.lastIndex = index
+    const group = sourceGroups.get(groupKey) || { sources: [] }
     group.sources.push(...event.sources.filter((source) => source?.url))
     sourceGroups.set(groupKey, group)
   })
 
+  const sortedEvents = results
+    .map((event, originalIndex) => {
+      const platformId = event.post?.platform_id ?? event.platform_id
+      const groupKey = platformId == null
+        ? `event-${originalIndex}`
+        : `platform-${typeof platformId}-${String(platformId)}`
+      const sources = uniqueSources(sourceGroups.get(groupKey).sources)
+      const latest = latestSource(sources) || event.post
+      const latestDate = parseBackendDate(latest?.posted_at)
+
+      return {
+        event,
+        groupKey,
+        sources,
+        originalIndex,
+        mentionCount: sources.length,
+        latestTimestamp: latestDate?.getTime() ?? -Infinity,
+        latestDateValue: localDateSortValue(latestDate),
+      }
+    })
+    .sort((left, right) => (
+      right.latestDateValue - left.latestDateValue
+      || right.mentionCount - left.mentionCount
+      || right.latestTimestamp - left.latestTimestamp
+      || left.originalIndex - right.originalIndex
+    ))
+
+  const lastIndexByGroup = new Map()
+  sortedEvents.forEach(({ groupKey }, index) => lastIndexByGroup.set(groupKey, index))
+
   return (
     <div className="event-results">
-      {results.map((event, index) => {
-        const platformId = event.post?.platform_id ?? event.platform_id
-        const groupKey = platformId == null
-          ? `event-${index}`
-          : `platform-${typeof platformId}-${String(platformId)}`
-        const group = sourceGroups.get(groupKey)
-        const sources = [...new Map(
-          group.sources.map((source) => [source.url, source]),
-        ).values()]
-
-        return (
-          <EventResult
-            event={event}
-            index={index}
-            sources={sources}
-            showSourceInfo={group.lastIndex === index}
-            key={event.event_key || index}
-          />
-        )
-      })}
+      {sortedEvents.map(({ event, groupKey, sources, originalIndex }, index) => (
+        <EventResult
+          event={event}
+          index={index}
+          sources={sources}
+          showSourceInfo={lastIndexByGroup.get(groupKey) === index}
+          key={event.event_key || originalIndex}
+        />
+      ))}
     </div>
   )
 }
