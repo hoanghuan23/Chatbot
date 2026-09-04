@@ -20,7 +20,7 @@ export default function Sidebar({ isOpen, onClose, onNewChat }) {
   return (
     <aside className={`sidebar ${isOpen ? 'is-open' : ''}`} aria-label="Main navigation">
       <div className="sidebar-header">
-        <a className="wordmark" href="#" aria-label="Soha home">
+        <a className="wordmark" href="#" aria-label="cnnd home">
           <img className="wordmark-logo" src={illuminatiLogo} alt="" />
           <span className="wordmark-text">CNND</span>
         </a>

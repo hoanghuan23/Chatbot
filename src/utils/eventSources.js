@@ -79,7 +79,7 @@ function sourceName(source, url) {
   const hostname = new URL(url).hostname.replace(/^www\./, '')
   const knownSources = {
     'vnexpress.net': 'VnExpress',
-    'soha.vn': 'Soha',
+    'cnnd.vn': 'cnnd',
     'tuoitre.vn': 'Tuổi Trẻ',
     'thanhnien.vn': 'Thanh Niên',
     'dantri.com.vn': 'Dân trí',

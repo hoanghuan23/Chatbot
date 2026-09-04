@@ -34,7 +34,7 @@ export default function ChatComposer({ value, onChange, onSend, isSending = fals
             <span className="sr-only">Workspace</span>
             <select value={workspace} onChange={(event) => setWorkspace(event.target.value)}>
               <option>CNND</option>
-              <option>SOHA</option>
+              <option>cnnd</option>
               <option>VCCORP</option>
             </select>
             <ChevronDown size={14} />

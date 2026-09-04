@@ -1,6 +1,6 @@
-# Soha Chat UI
+# cnnd Chat UI
 
-Giao diện khung chat Soha được xây dựng bằng React và Vite. Tin nhắn được gửi tới Neo4j Chat Search API và trạng thái hội thoại chỉ được giữ trong phiên trình duyệt.
+Giao diện khung chat cnnd được xây dựng bằng React và Vite. Tin nhắn được gửi tới Neo4j Chat Search API và trạng thái hội thoại chỉ được giữ trong phiên trình duyệt.
 
 ## Chạy dự án
 

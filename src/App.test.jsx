@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
-describe('Soha chat UI', () => {
+describe('cnnd chat UI', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
   })
@@ -39,9 +39,9 @@ describe('Soha chat UI', () => {
     render(<App />)
     const composer = screen.getByRole('textbox', { name: 'Message' })
 
-    await user.type(composer, '  Xin chào Soha{Enter}')
+    await user.type(composer, '  Xin chào cnnd{Enter}')
 
-    expect(screen.getByLabelText('Current conversation')).toHaveTextContent('Xin chào Soha')
+    expect(screen.getByLabelText('Current conversation')).toHaveTextContent('Xin chào cnnd')
     expect(composer).toHaveValue('')
   })
 
@@ -105,7 +105,7 @@ describe('Soha chat UI', () => {
         results: [{
           id: 'event-4',
           posts: [
-            { url: 'https://soha.vn/older-post', posted_at: '2026-08-20T08:00:00Z' },
+            { url: 'https://cnnd.vn/older-post', posted_at: '2026-08-20T08:00:00Z' },
             { url: 'https://vnexpress.net/newest-post', posted_at: '2026-08-21T08:00:00Z' },
           ],
         }],
@@ -189,7 +189,7 @@ describe('Soha chat UI', () => {
             description: 'Sự kiện có hai lượt đề cập lúc 08:14.',
             sources: [
               { source: 'CBS News', url: 'https://example.com/cbs', posted_at: '2026-08-26T01:14:00Z' },
-              { source: 'Soha', url: 'https://example.com/soha', posted_at: '2026-08-26T00:00:00Z' },
+              { source: 'cnnd', url: 'https://example.com/cnnd', posted_at: '2026-08-26T00:00:00Z' },
             ],
           },
           {
@@ -293,8 +293,8 @@ describe('Soha chat UI', () => {
           event_key: 'single-post-event',
           description: 'Sự kiện chỉ có một bài viết.',
           sources: [{
-            source: 'Soha',
-            url: 'https://soha.vn/single-post',
+            source: 'cnnd',
+            url: 'https://cnnd.vn/single-post',
             posted_at: '2026-08-22T07:52:14',
           }],
         }],
@@ -305,9 +305,9 @@ describe('Soha chat UI', () => {
 
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Một bài viết?{Enter}')
 
-    expect(await screen.findByRole('link', { name: /^Soha 22\/08\/2026/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /^cnnd 22\/08\/2026/ })).toHaveAttribute(
       'href',
-      'https://soha.vn/single-post',
+      'https://cnnd.vn/single-post',
     )
     expect(screen.queryByRole('button', { name: /Xem 1 bài viết/ })).not.toBeInTheDocument()
   })
