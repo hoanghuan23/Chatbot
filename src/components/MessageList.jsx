@@ -111,14 +111,19 @@ export default function MessageList({ messages, onLoadMore }) {
             <>
               <AssistantContent message={message} />
               {message.hasMore && message.nextCursor && (
-                <button
-                  className="load-more-events"
-                  type="button"
-                  disabled={message.isLoadingMore}
-                  onClick={() => onLoadMore(message.id)}
-                >
-                  {message.isLoadingMore ? 'Đang tải...' : 'Xem tiếp'}
-                </button>
+                <div className="event-actions">
+                  <button
+                    className="load-more-events"
+                    type="button"
+                    disabled={message.isLoadingMore}
+                    onClick={() => onLoadMore(message.id)}
+                  >
+                    {message.isLoadingMore ? 'Đang tải...' : 'Xem tiếp'}
+                  </button>
+                  <button className="load-more-events" type="button">
+                    Sự kiện liên quan
+                  </button>
+                </div>
               )}
               {message.loadMoreError && (
                 <span className="load-more-error" role="alert">{message.loadMoreError}</span>
