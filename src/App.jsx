@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Menu } from 'lucide-react'
-import { sendChatMessage } from './api/chat'
+import { searchRelatedEvents, sendChatMessage } from './api/chat'
 import ChatComposer from './components/ChatComposer'
 import MessageList from './components/MessageList'
 import Sidebar from './components/Sidebar'
@@ -13,11 +13,14 @@ export default function App() {
   const [isSending, setIsSending] = useState(false)
   const activeRequestRef = useRef(null)
 
-  useEffect(() => () => activeRequestRef.current?.abort(), [])
+  useEffect(() => () => {
+    activeRequestRef.current?.abort()
+    activeRequestRef.current = null
+  }, [])
 
   const handleSend = async (content) => {
     const cleanContent = content.trim()
-    if (!cleanContent || isSending) return
+    if (!cleanContent || activeRequestRef.current) return
 
     const controller = new AbortController()
     activeRequestRef.current = controller
@@ -39,12 +42,14 @@ export default function App() {
         signal: controller.signal,
       })
 
+      if (activeRequestRef.current !== controller) return
       setMessages((current) => [
         ...current,
         {
           id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           role: 'assistant',
           content: response.answer,
+          query: response.query,
           count: response.count,
           results: response.results,
           hasMore: response.has_more === true,
@@ -52,7 +57,7 @@ export default function App() {
         },
       ])
     } catch (error) {
-      if (error.name !== 'AbortError') {
+      if (error.name !== 'AbortError' && activeRequestRef.current === controller) {
         setMessages((current) => [
           ...current,
           {
@@ -72,7 +77,7 @@ export default function App() {
   }
 
   const handleLoadMore = async (messageId) => {
-    if (isSending) return
+    if (activeRequestRef.current) return
 
     const message = messages.find((item) => item.id === messageId)
     if (!message?.hasMore || !message.nextCursor) return
@@ -93,6 +98,7 @@ export default function App() {
         signal: controller.signal,
       })
 
+      if (activeRequestRef.current !== controller) return
       setMessages((current) => current.map((item) => {
         if (item.id !== messageId) return item
 
@@ -110,7 +116,7 @@ export default function App() {
         }
       }))
     } catch (error) {
-      if (error.name !== 'AbortError') {
+      if (error.name !== 'AbortError' && activeRequestRef.current === controller) {
         setMessages((current) => current.map((item) => (
           item.id === messageId
             ? {
@@ -120,6 +126,48 @@ export default function App() {
               }
             : item
         )))
+      }
+    } finally {
+      if (activeRequestRef.current === controller) {
+        activeRequestRef.current = null
+        setIsSending(false)
+      }
+    }
+  }
+
+  const handleRelated = async (messageId) => {
+    if (activeRequestRef.current) return
+    const message = messages.find((item) => item.id === messageId)
+    if (message?.query?.intent !== 'search_events' || !message.query.location) return
+    if (message.related?.loaded && !(message.related.hasMore && message.related.nextCursor)) return
+
+    const controller = new AbortController()
+    activeRequestRef.current = controller
+    setIsSending(true)
+    const updateRelated = (update) => setMessages((current) => current.map((item) => (
+      item.id === messageId
+        ? { ...item, related: { ...item.related, ...update(item.related) } }
+        : item
+    )))
+    updateRelated(() => ({ isLoading: true, error: null }))
+    try {
+      const response = await searchRelatedEvents(message.query, {
+        limit: 10,
+        cursor: message.related?.loaded ? message.related.nextCursor : null,
+        signal: controller.signal,
+      })
+      if (activeRequestRef.current !== controller) return
+      updateRelated((related) => ({
+        results: [...(related?.results || []), ...response.results],
+        loaded: true,
+        isLoading: false,
+        error: null,
+        hasMore: response.has_more === true,
+        nextCursor: response.next_cursor,
+      }))
+    } catch (error) {
+      if (error.name !== 'AbortError' && activeRequestRef.current === controller) {
+        updateRelated(() => ({ isLoading: false, error: `Không thể tải sự kiện liên quan: ${error.message}` }))
       }
     } finally {
       if (activeRequestRef.current === controller) {
@@ -169,7 +217,7 @@ export default function App() {
           {messages.length === 0 ? (
             <WelcomePanel onSuggestionSelect={setDraft} />
           ) : (
-            <MessageList messages={messages} onLoadMore={handleLoadMore} />
+            <MessageList messages={messages} onLoadMore={handleLoadMore} onRelated={handleRelated} isBusy={isSending} />
           )}
 
           <ChatComposer

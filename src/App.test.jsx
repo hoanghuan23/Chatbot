@@ -150,7 +150,7 @@ describe('cnnd chat UI', () => {
     await user.type(screen.getByRole('textbox', { name: 'Message' }), 'Tin VETC?{Enter}')
 
     const firstEventTitle = await screen.findByText('Sự kiện 1: VETC tạm dừng thu phí ví điện tử')
-    const eventIntro = screen.getByText('Dưới đây là các sự kiện liên quan:')
+    const eventIntro = screen.getByText('Kết quả tìm kiếm:')
 
     expect(eventIntro).toBeInTheDocument()
     expect(eventIntro.compareDocumentPosition(firstEventTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

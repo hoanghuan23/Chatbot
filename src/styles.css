@@ -157,3 +157,6 @@ button { color: inherit; }
   .composer-tools .select-control select { width: 68px; }
   .model-select select { width: 96px; }
 }
+
+.related-events { margin-top: 24px; padding-top: 20px; border-top: 1px solid #dce8e2; }
+.related-events h3 { font-size: 15px; font-weight: 600; }
