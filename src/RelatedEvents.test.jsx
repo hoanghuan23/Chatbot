@@ -22,12 +22,13 @@ it('keeps query, results and cursors independent across both pagination flows', 
   await user.click(screen.getByRole('button', { name: 'Sự kiện liên quan' }))
   expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual({ query, limit: 10, cursor: null })
   expect(fetch.mock.calls[1][0]).toBe('/api/search/related')
-  const group = screen.getByRole('region', { name: 'Khám phá các sự kiện theo từng khu vực ở Hà N' })
+  const group = screen.getByRole('region', { name: 'Sự kiện liên quan' })
   expect(within(group).getByText('Liên quan 1')).toBeInTheDocument()
   expect(within(group).queryByText('Trực tiếp')).not.toBeInTheDocument()
   fetch.mockResolvedValueOnce(response({ answer: '', results: [event('Trực tiếp 2')], has_more: false }))
   await user.click(screen.getByRole('button', { name: 'Xem tiếp', exact: true }))
   expect(JSON.parse(fetch.mock.calls[2][1].body).cursor).toBe('direct-2')
+  expect(JSON.parse(fetch.mock.calls[2][1].body).query).toEqual(query)
   fetch.mockResolvedValueOnce(response({ results: [event('Liên quan 2')], has_more: false }))
   await user.click(screen.getByRole('button', { name: 'Xem tiếp sự kiện liên quan' }))
   expect(JSON.parse(fetch.mock.calls[3][1].body)).toEqual({ query, limit: 10, cursor: 'related-2' })
@@ -61,7 +62,7 @@ it('preserves loaded related results and cursor when the next page fails', async
   expect(screen.getByText('Trang sau')).toBeInTheDocument()
 })
 
-it.each([undefined, { ...query, location: null }, { ...query, intent: 'other' }])('hides related action for ineligible query %j', async (queryValue) => {
+it.each([undefined, { ...query, location: null, entity: [] }, { ...query, intent: 'other' }])('hides related action for ineligible query %j', async (queryValue) => {
   await start({ query: queryValue })
   expect(screen.queryByRole('button', { name: 'Sự kiện liên quan' })).not.toBeInTheDocument()
 })
@@ -85,4 +86,45 @@ it('locks requests while loading and discards late related responses after New C
 it('rejects malformed related responses without requiring answer', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ results: null })))
   await expect(searchRelatedEvents(query)).rejects.toThrow('results')
+})
+
+
+it.each(['Công ty A', ['A', 'B']])('supports entity-only queries without intent: %j', async (entity) => {
+  const entityQuery = { location: null, entity, hours: 48 }
+  const user = await start({ query: entityQuery })
+  fetch.mockResolvedValueOnce(response({ results: [] }))
+  await user.click(screen.getByRole('button', { name: 'Sự kiện liên quan' }))
+  expect(JSON.parse(fetch.mock.calls[1][1].body).query).toEqual(entityQuery)
+})
+
+it('shows a simple bold line and merges repeated labels from different evidence', async () => {
+  const user = await start()
+  fetch.mockResolvedValueOnce(response({ results: [{ ...event('Liên quan'), relation_reasons: [
+    { kind: 'entity_name_match', label: 'Liên quan qua: Đại học Y Hà Nội', via_entity: { id: '1', name: 'Đại học Y Hà Nội' }, post: { platform: 'facebook', platform_id: 'post-1' } },
+    { kind: 'entity_name_match', label: 'Liên quan qua: Đại học Y Hà Nội', via_entity: { id: '1', name: 'Đại học Y Hà Nội' }, post: { platform: 'facebook', platform_id: 'post-2' } },
+    { kind: 'text_match', label: 'Khớp từ khóa trong mô tả', via_entity: null, excerpt: 'Hội nghị tại Hà Nội', query_term: 'hà nội', query_field: 'location' },
+    { kind: 'location_hierarchy', label: 'Liên quan qua: Ba Đình', via_entity: { id: '2', name: 'Ba Đình' }, relationship: 'IN_REGION' },
+  ] }] }))
+  await user.click(screen.getByRole('button', { name: 'Sự kiện liên quan' }))
+  const line = screen.getByLabelText('Lý do liên quan')
+  expect(line).toHaveTextContent('Liên quan qua: Đại học Y Hà Nội; Khớp từ khóa trong mô tả; Liên quan qua: Ba Đình')
+  expect(line.textContent.match(/Liên quan qua: Đại học Y Hà Nội/g)).toHaveLength(1)
+  expect(line.querySelector('strong')).toBeInTheDocument()
+  expect(line.querySelector('details')).toBeNull()
+  expect(screen.queryByText('Hội nghị tại Hà Nội')).not.toBeInTheDocument()
+})
+
+it.each(['direct', 'related'])('restarts search after an expired %s cursor', async (flow) => {
+  const user = await start({ has_more: true, next_cursor: 'old-direct' })
+  if (flow === 'related') {
+    fetch.mockResolvedValueOnce(response({ results: [event('Đã tải')], has_more: true, next_cursor: 'old-related' }))
+    await user.click(screen.getByRole('button', { name: 'Sự kiện liên quan' }))
+  }
+  fetch.mockResolvedValueOnce({ ok: false, status: 400, json: async () => ({ detail: 'Invalid cursor' }) })
+  await user.click(screen.getByRole('button', { name: flow === 'direct' ? 'Xem tiếp' : 'Xem tiếp sự kiện liên quan', exact: true }))
+  expect(screen.getByRole('alert')).toHaveTextContent('Vui lòng tìm kiếm lại')
+  fetch.mockResolvedValueOnce(response({ answer: 'Kết quả mới', results: [] }))
+  await user.click(screen.getByRole('button', { name: 'Tìm kiếm lại' }))
+  expect(JSON.parse(fetch.mock.calls.at(-1)[1].body)).toEqual({ message: 'Tìm sự kiện', limit: 10 })
+  expect(screen.getByText('Kết quả mới')).toBeInTheDocument()
 })

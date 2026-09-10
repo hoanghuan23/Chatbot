@@ -160,3 +160,5 @@ button { color: inherit; }
 
 .related-events { margin-top: 24px; padding-top: 20px; border-top: 1px solid #dce8e2; }
 .related-events h3 { font-size: 15px; font-weight: 600; }
+
+.relation-reasons { margin: 0 0 18px; color: #7ad2b0; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Menu } from 'lucide-react'
-import { searchRelatedEvents, sendChatMessage } from './api/chat'
+import { canSearchRelated, searchRelatedEvents, sendChatMessage } from './api/chat'
 import ChatComposer from './components/ChatComposer'
 import MessageList from './components/MessageList'
 import Sidebar from './components/Sidebar'
@@ -49,6 +49,7 @@ export default function App() {
           id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           role: 'assistant',
           content: response.answer,
+          searchText: cleanContent,
           query: response.query,
           count: response.count,
           results: response.results,
@@ -95,6 +96,7 @@ export default function App() {
       const response = await sendChatMessage('xem tiếp', {
         limit: 10,
         cursor: message.nextCursor,
+        query: message.query,
         signal: controller.signal,
       })
 
@@ -122,7 +124,9 @@ export default function App() {
             ? {
                 ...item,
                 isLoadingMore: false,
-                loadMoreError: `Không thể xem tiếp: ${error.message}`,
+                loadMoreError: error.status === 400 ? 'Phiên tìm kiếm đã hết hiệu lực. Vui lòng tìm kiếm lại.' : `Không thể xem tiếp: ${error.message}`,
+                cursorExpired: error.status === 400,
+                hasMore: error.status === 400 ? false : item.hasMore,
               }
             : item
         )))
@@ -138,7 +142,7 @@ export default function App() {
   const handleRelated = async (messageId) => {
     if (activeRequestRef.current) return
     const message = messages.find((item) => item.id === messageId)
-    if (message?.query?.intent !== 'search_events' || !message.query.location) return
+    if (!canSearchRelated(message?.query)) return
     if (message.related?.loaded && !(message.related.hasMore && message.related.nextCursor)) return
 
     const controller = new AbortController()
@@ -167,7 +171,11 @@ export default function App() {
       }))
     } catch (error) {
       if (error.name !== 'AbortError' && activeRequestRef.current === controller) {
-        updateRelated(() => ({ isLoading: false, error: `Không thể tải sự kiện liên quan: ${error.message}` }))
+        updateRelated(() => ({
+          isLoading: false,
+          cursorExpired: error.status === 400,
+          error: error.status === 400 ? 'Phiên tìm kiếm đã hết hiệu lực. Vui lòng tìm kiếm lại.' : `Không thể tải sự kiện liên quan: ${error.message}`,
+        }))
       }
     } finally {
       if (activeRequestRef.current === controller) {
@@ -217,7 +225,7 @@ export default function App() {
           {messages.length === 0 ? (
             <WelcomePanel onSuggestionSelect={setDraft} />
           ) : (
-            <MessageList messages={messages} onLoadMore={handleLoadMore} onRelated={handleRelated} isBusy={isSending} />
+            <MessageList messages={messages} onLoadMore={handleLoadMore} onRelated={handleRelated} onRestart={(id) => handleSend(messages.find((item) => item.id === id).searchText)} isBusy={isSending} />
           )}
 
           <ChatComposer

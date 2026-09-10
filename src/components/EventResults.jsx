@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp, ExternalLink, Newspaper } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Asia/Ho_Chi_Minh',
@@ -84,12 +84,27 @@ function localDateSortValue(date) {
   return Number(`${parts.year}${parts.month}${parts.day}`)
 }
 
-function EventResult({ event, index, sources, showSourceInfo }) {
+function RelationReasons({ reasons }) {
+  if (!Array.isArray(reasons) || !reasons.length) return null
+  const labels = [...new Set(reasons.map((reason) => (
+    reason.label?.trim() || (reason.kind === 'text_match'
+      ? 'Khớp từ khóa trong nội dung/mô tả'
+      : `Liên quan qua: ${reason.via_entity?.name || 'Địa điểm liên quan'}`)
+  )))]
+
+  return (
+    <p className="relation-reasons" aria-label="Lý do liên quan">
+      <strong>{labels.join('; ')}</strong>
+    </p>
+  )
+}
+
+function EventResult({ event, index, sources, showSourceInfo, showReasons }) {
   const [expanded, setExpanded] = useState(false)
   const latest = latestSource(sources) || event.post
   const dateRange = eventDateRange(sources)
   const count = sources.length
-  const panelId = `event-sources-${event.event_key || index}`
+  const panelId = useId()
   const title = typeof event.title === 'string' ? event.title.trim() : ''
 
   return (
@@ -99,6 +114,7 @@ function EventResult({ event, index, sources, showSourceInfo }) {
       </div>
 
       <p className="event-result-description">{event.description}</p>
+      {showReasons && <RelationReasons reasons={event.relation_reasons} />}
 
       {showSourceInfo && (
         <div className="event-result-meta">
@@ -153,7 +169,7 @@ function EventResult({ event, index, sources, showSourceInfo }) {
   )
 }
 
-export default function EventResults({ results }) {
+export default function EventResults({ results, showReasons = false }) {
   const sourceGroups = new Map()
 
   results.forEach((event, index) => {
@@ -162,7 +178,7 @@ export default function EventResults({ results }) {
       ? `event-${index}`
       : `platform-${typeof platformId}-${String(platformId)}`
     const group = sourceGroups.get(groupKey) || { sources: [] }
-    group.sources.push(...event.sources.filter((source) => source?.url))
+    group.sources.push(...(event.sources || []).filter((source) => source?.url))
     sourceGroups.set(groupKey, group)
   })
 
@@ -203,6 +219,7 @@ export default function EventResults({ results }) {
           event={event}
           index={index}
           sources={sources}
+          showReasons={showReasons}
           showSourceInfo={lastIndexByGroup.get(groupKey) === index}
           key={event.event_key || originalIndex}
         />

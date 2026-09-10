@@ -1,3 +1,4 @@
+import { canSearchRelated } from '../api/chat'
 import { getEventSources } from '../utils/eventSources'
 import EventResults from './EventResults'
 import EventSourceLink from './EventSourceLink'
@@ -16,7 +17,7 @@ function AssistantContent({ message }) {
   if (hasStructuredEventResults(message.results)) {
     return (
       <>
-        <p className="event-results-intro">Kết quả tìm kiếm:</p>
+        <p className="event-results-intro">{canSearchRelated(message.query) ? 'Sự kiện trực tiếp:' : 'Kết quả tìm kiếm:'}</p>
         <EventResults results={message.results} />
       </>
     )
@@ -99,7 +100,7 @@ function AssistantContent({ message }) {
   )
 }
 
-export default function MessageList({ messages, onLoadMore, onRelated, isBusy }) {
+export default function MessageList({ messages, onLoadMore, onRelated, onRestart, isBusy }) {
   return (
     <section className="message-list" aria-live="polite" aria-label="Current conversation">
       {messages.map((message) => (
@@ -111,7 +112,7 @@ export default function MessageList({ messages, onLoadMore, onRelated, isBusy })
             <>
               <AssistantContent message={message} />
               {((message.hasMore && message.nextCursor) || (
-                message.query?.intent === 'search_events' && message.query.location && !message.related
+                canSearchRelated(message.query) && !message.related
               )) && (
                 <div className="event-actions">
                   {message.hasMore && message.nextCursor && <button
@@ -122,16 +123,17 @@ export default function MessageList({ messages, onLoadMore, onRelated, isBusy })
                   >
                     {message.isLoadingMore ? 'Đang tải...' : 'Xem tiếp'}
                   </button>}
-                  {message.query?.intent === 'search_events' && message.query.location && !message.related && (
+                  {canSearchRelated(message.query) && !message.related && (
                     <button className="load-more-events" type="button" disabled={isBusy} onClick={() => onRelated(message.id)}>
                       Sự kiện liên quan
                     </button>
                   )}
                 </div>
               )}
-              {message.query?.intent === 'search_events' && message.query.location && message.related && (
-                <RelatedEvents message={message} onRelated={onRelated} isBusy={isBusy} />
+              {canSearchRelated(message.query) && message.related && (
+                <RelatedEvents message={message} onRelated={onRelated} onRestart={onRestart} isBusy={isBusy} />
               )}
+              {message.cursorExpired && <button className="load-more-events" type="button" disabled={isBusy} onClick={() => onRestart(message.id)}>Tìm kiếm lại</button>}
               {message.loadMoreError && (
                 <span className="load-more-error" role="alert">{message.loadMoreError}</span>
               )}
@@ -143,19 +145,19 @@ export default function MessageList({ messages, onLoadMore, onRelated, isBusy })
   )
 }
 
-function RelatedEvents({ message, onRelated, isBusy }) {
+function RelatedEvents({ message, onRelated, onRestart, isBusy }) {
   const related = message.related
   return (
-    <section className="related-events" aria-label={`Khám phá các sự kiện theo từng khu vực ở ${message.query.location}`} aria-busy={related.isLoading}>
-      <h3 className="event-results-intro">Khám phá các sự kiện theo từng khu vực ở {message.query.location}</h3>
-      {related.results?.length > 0 && <EventResults results={related.results} />}
+    <section className="related-events" aria-label="Sự kiện liên quan" aria-busy={related.isLoading}>
+      <h3 className="event-results-intro">Sự kiện liên quan</h3>
+      {related.results?.length > 0 && <EventResults results={related.results} showReasons />}
       {related.loaded && !related.results?.length && <p>Không tìm thấy sự kiện liên quan.</p>}
       {related.isLoading && <p role="status">Đang tải…</p>}
       {related.error && <p className="load-more-error" role="alert">{related.error}</p>}
       {(related.error || (related.loaded && related.hasMore && related.nextCursor)) && (
         <div className="event-actions">
-          <button className="load-more-events" type="button" disabled={isBusy} onClick={() => onRelated(message.id)}>
-            {related.error ? 'Thử lại' : 'Xem tiếp sự kiện liên quan'}
+          <button className="load-more-events" type="button" disabled={isBusy} onClick={() => related.cursorExpired ? onRestart(message.id) : onRelated(message.id)}>
+            {related.cursorExpired ? 'Tìm kiếm lại' : related.error ? 'Thử lại' : 'Xem tiếp sự kiện liên quan'}
           </button>
         </div>
       )} 
