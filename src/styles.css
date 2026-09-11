@@ -162,3 +162,48 @@ button { color: inherit; }
 .related-events h3 { font-size: 15px; font-weight: 600; }
 
 .relation-reasons { margin: 0 0 18px; color: #7ad2b0; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+
+.location-results { margin-top: 0; white-space: normal; overflow-wrap: anywhere; }
+.location-results h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 16px; }
+.location-notice { padding: 10px 12px; border-left: 3px solid #c38c29; background: #fff8e9; color: #715019; border-radius: 4px; }
+.location-count, .location-depth, .location-empty { color: #60666e; font-size: 12px; }
+.location-related-events { margin-top: 14px; }
+.location-related-events h4 { margin: 0; font-size: 14px; }
+.location-related-events ul { padding-left: 20px; margin: 8px 0 12px; }
+.location-description { margin: 8px 0 12px; white-space: pre-wrap; }
+.location-event { margin-top: 10px; padding: 12px; border: 1px solid #dce2df; border-radius: 9px; background: #fff; }
+.location-source { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 12px; }
+.location-source a { display: inline-flex; align-items: center; gap: 4px; color: #087b50; }
+.location-paths { display: grid; gap: 10px; list-style: none; margin: 12px 0; padding: 0; }
+.location-place { padding: 9px 11px; background: #f1f8f5; border-radius: 6px; }
+.location-chain { margin-top: 4px; color: #226049; }
+.location-content, .location-relations { font-size: 12px; }
+.location-content summary, .location-relations summary { cursor: pointer; color: #087b50; }
+.location-content summary:focus-visible, .location-relations summary:focus-visible, .location-source a:focus-visible { outline: 2px solid #0cbb72; outline-offset: 3px; }
+.location-content p { white-space: pre-wrap; max-height: 320px; overflow-y: auto; }
+
+.chat-main, .chat-content { min-width: 0; }
+.message { overflow-wrap: anywhere; }
+.message.message-location { width: 100%; max-width: 100%; padding: 20px; }
+.location-source { justify-content: space-between; }
+.location-source > * { min-width: 0; }
+.location-source svg, .location-results h3 svg { flex-shrink: 0; }
+.location-answer { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; }
+@media (max-width: 760px) {
+  .message.message-location { padding: 14px; }
+  .location-event { padding: 10px; }
+}
+
+.location-label { margin: 12px 0 0; font-size: 13px; }
+.location-evidence { display: grid; gap: 6px; margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
+.location-evidence a { color: #087b50; }
+.location-evidence a:focus-visible { outline: 2px solid #0cbb72; outline-offset: 3px; }
+.location-source-list { display: grid; gap: 7px; list-style: none; margin: 12px 0 0; padding: 11px 12px; border-left: 2px solid #d5d8dc; background: #f7f8fa; }
+.location-source-list li { min-width: 0; font-size: 11px; line-height: 1.4; color: #60666e; }
+.location-source-list a { display: inline-flex; align-items: center; gap: 6px; color: #60666e; text-decoration: none; }
+.location-source-list a:hover { color: #087b50; }
+.location-source-list a:focus-visible { outline: 2px solid #0cbb72; outline-offset: 3px; }
+.location-source-list svg { flex-shrink: 0; }
+
+.location-source-list .location-source-reference { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; max-width: 100%; }
+.location-source-reference time { white-space: nowrap; }

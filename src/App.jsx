@@ -53,7 +53,8 @@ export default function App() {
           query: response.query,
           count: response.count,
           results: response.results,
-          hasMore: response.has_more === true,
+          locationEvents: response.location_events,
+          hasMore: response.query?.intent !== 'locate_event' && response.has_more === true,
           nextCursor: response.next_cursor,
         },
       ])

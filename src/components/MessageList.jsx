@@ -2,6 +2,7 @@ import { canSearchRelated } from '../api/chat'
 import { getEventSources } from '../utils/eventSources'
 import EventResults from './EventResults'
 import EventSourceLink from './EventSourceLink'
+import LocationCandidates from './LocationCandidates'
 
 function hasStructuredEventResults(results) {
   return Array.isArray(results)
@@ -14,6 +15,12 @@ function hasStructuredEventResults(results) {
 }
 
 function AssistantContent({ message }) {
+  if (message.query?.intent === 'locate_event') {
+    return Array.isArray(message.locationEvents) && message.locationEvents.length > 0
+      ? <LocationCandidates events={message.locationEvents} />
+      : <div className="location-answer">{message.content || 'Không tìm thấy sự kiện phù hợp.'}</div>
+  }
+
   if (hasStructuredEventResults(message.results)) {
     return (
       <>
@@ -105,7 +112,7 @@ export default function MessageList({ messages, onLoadMore, onRelated, onRestart
     <section className="message-list" aria-live="polite" aria-label="Current conversation">
       {messages.map((message) => (
         <article
-          className={`message ${message.role}${message.isError ? ' error' : ''}`}
+          className={`message ${message.role}${message.isError ? ' error' : ''}${message.query?.intent === 'locate_event' ? ' message-location' : ''}`}
           key={message.id}
         >
           {message.role === 'assistant' && !message.isError ? (
