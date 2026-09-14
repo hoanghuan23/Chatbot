@@ -204,3 +204,4 @@ button { color: inherit; }
 
 .location-source-list .location-source-reference { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; max-width: 100%; }
 .location-source-reference time { white-space: nowrap; }
+.metric-tier { display: inline-block; flex-shrink: 0; white-space: nowrap; font-weight: 400; color: #33383e; }

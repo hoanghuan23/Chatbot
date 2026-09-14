@@ -1,6 +1,7 @@
 import { ExternalLink } from 'lucide-react'
 
 import { formatVietnameseDateTime } from '../utils/dateTime'
+import MetricTier from './MetricTier'
 
 export default function EventSourceLink({ source }) {
   const postedAt = formatVietnameseDateTime(source.postedAt)
@@ -17,6 +18,7 @@ export default function EventSourceLink({ source }) {
       <ExternalLink size={12} aria-hidden="true" />
       <span>{source.label}</span>
       {postedAt && <span> - {postedAt}</span>}
+      <MetricTier tier={source.metricTier} />
       <span className="event-source-count">+{source.count}</span>
     </a>
   )

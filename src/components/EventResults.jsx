@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronUp, ExternalLink, Newspaper } from 'lucide-react'
 import { useId, useState } from 'react'
+import MetricTier from './MetricTier'
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Asia/Ho_Chi_Minh',
@@ -130,6 +131,7 @@ function EventResult({ event, index, sources, showSourceInfo, showReasons }) {
           <a href={latest.url} target="_blank" rel="noopener noreferrer">
             <span>{latest.source || event.post?.source_name || 'Xem nguồn'}</span>
             {formatDateTime(latest.posted_at) && <time>{formatDateTime(latest.posted_at)}</time>}
+            <MetricTier tier={latest.metric_tier} />
             <ExternalLink size={12} aria-hidden="true" />
           </a>
         </div>
@@ -160,6 +162,7 @@ function EventResult({ event, index, sources, showSourceInfo, showReasons }) {
             >
               <span>{source.source || `Nguồn ${sourceIndex + 1}`}</span>
               {formatDateTime(source.posted_at) && <time>{formatDateTime(source.posted_at)}</time>}
+              <MetricTier tier={source.metric_tier} />
               <ExternalLink size={11} aria-hidden="true" />
             </a>
           ))}

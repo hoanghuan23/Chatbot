@@ -49,6 +49,7 @@ function collectLinks(value, context = {}, links = [], seen = new Set()) {
     postedAt: firstValue(value, DATE_KEYS) || context.postedAt,
     source: firstValue(value, SOURCE_KEYS) || context.source,
     platformId: firstIdentifier(value, PLATFORM_ID_KEYS) ?? context.platformId,
+    metricTier: Object.hasOwn(value, 'metric_tier') ? value.metric_tier : context.metricTier,
   }
 
   if (Array.isArray(value)) {

@@ -1,5 +1,6 @@
 import { ExternalLink, MapPin } from 'lucide-react'
 import { formatVietnameseDateTime } from '../utils/dateTime'
+import MetricTier from './MetricTier'
 
 function sourceUrl(value) {
   if (typeof value !== 'string') return null
@@ -15,7 +16,7 @@ function SourceReference({ source, index }) {
   const name = source.source_name?.trim() || source.post_platform
   const label = name || `Bài viết ${index + 1}`
   const postedAt = formatVietnameseDateTime(source.posted_at)
-  const content = <><span>{label}</span>{postedAt && <time>{postedAt}</time>}</>
+  const content = <><span>{label}</span>{postedAt && <time>{postedAt}</time>}<MetricTier tier={source.metric_tier} /></>
   const url = sourceUrl(source.post_url)
   return url
     ? <a title={source.post_content || undefined} href={url} target="_blank" rel="noopener noreferrer" className="location-source-reference">{content} <ExternalLink size={12} aria-hidden="true" /></a>
