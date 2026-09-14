@@ -11,17 +11,15 @@ function sourceUrl(value) {
   }
 }
 
-function SourceReference({ source, index, compact = false }) {
+function SourceReference({ source, index }) {
   const name = source.source_name?.trim() || source.post_platform
-  const label = compact
-    ? name || `Bài viết ${index + 1}`
-    : `Bài viết ${index + 1} · ${name || 'Nguồn bài viết'}`
-  const postedAt = compact ? formatVietnameseDateTime(source.posted_at) : null
+  const label = name || `Bài viết ${index + 1}`
+  const postedAt = formatVietnameseDateTime(source.posted_at)
   const content = <><span>{label}</span>{postedAt && <time>{postedAt}</time>}</>
   const url = sourceUrl(source.post_url)
   return url
     ? <a title={source.post_content || undefined} href={url} target="_blank" rel="noopener noreferrer" className="location-source-reference">{content} <ExternalLink size={12} aria-hidden="true" /></a>
-    : <span className="location-source-reference" title={source.post_content || 'Chưa có liên kết bài viết'}>{content}{!compact && ' — Chưa có liên kết bài viết'}</span>
+    : <span className="location-source-reference" title={source.post_content || 'Chưa có liên kết bài viết'}>{content}</span>
 }
 
 export default function LocationCandidates({ events }) {
@@ -48,13 +46,6 @@ export default function LocationCandidates({ events }) {
                     <div className="location-chain">{Array.isArray(location.location_chain) && location.location_chain.length
                       ? location.location_chain.join(' → ')
                       : location.mentioned_location}</div>
-                    <ul className="location-evidence" aria-label="Bài viết cung cấp địa điểm">
-                      {sources.map((source, sourceIndex) => (
-                        source.source_id != null && location.source_ids?.includes(source.source_id)
-                          ? <li key={source.source_id}><SourceReference source={source} index={sourceIndex} /></li>
-                          : null
-                      ))}
-                    </ul>
                   </li>
                 ))}
               </ul>
@@ -64,7 +55,7 @@ export default function LocationCandidates({ events }) {
               <ul className="location-source-list">
                 {sources.map((source, sourceIndex) => (
                   <li key={source.source_id ?? sourceIndex}>
-                    <SourceReference source={source} index={sourceIndex} compact />
+                    <SourceReference source={source} index={sourceIndex} />
                   </li>
                 ))}
               </ul>

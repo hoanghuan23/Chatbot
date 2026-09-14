@@ -195,9 +195,6 @@ button { color: inherit; }
 }
 
 .location-label { margin: 12px 0 0; font-size: 13px; }
-.location-evidence { display: grid; gap: 6px; margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
-.location-evidence a { color: #087b50; }
-.location-evidence a:focus-visible { outline: 2px solid #0cbb72; outline-offset: 3px; }
 .location-source-list { display: grid; gap: 7px; list-style: none; margin: 12px 0 0; padding: 11px 12px; border-left: 2px solid #d5d8dc; background: #f7f8fa; }
 .location-source-list li { min-width: 0; font-size: 11px; line-height: 1.4; color: #60666e; }
 .location-source-list a { display: inline-flex; align-items: center; gap: 6px; color: #60666e; text-decoration: none; }

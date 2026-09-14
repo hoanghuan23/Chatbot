@@ -16,7 +16,7 @@ const event = {
 
 afterEach(() => vi.unstubAllGlobals())
 
-it('renders one event from the API with location evidence and all sources, ignoring legacy candidates and pagination', async () => {
+it('renders one event from the API with locations and a single source list, ignoring legacy candidates and pagination', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({
     answer: 'Câu trả lời dự phòng', query: { intent: 'locate_event' }, count: 1,
     results: [], location_events: [event], location_candidates: [{ event_description: 'Dữ liệu cũ' }],
@@ -30,10 +30,7 @@ it('renders one event from the API with location evidence and all sources, ignor
   expect(screen.queryByRole('region', { name: 'Sự kiện 2' })).not.toBeInTheDocument()
   expect(within(card).getByText(event.event_description)).toBeVisible()
   expect(within(card).getByText('Thanh Hóa → miền Trung → Việt Nam')).toBeVisible()
-  const evidence = within(card).getByRole('list', { name: 'Bài viết cung cấp địa điểm' })
-  expect(within(evidence).getAllByRole('link')).toHaveLength(1)
-  expect(within(evidence).getByRole('link')).toHaveAttribute('href', sources[1].post_url)
-  expect(within(evidence).queryByText(/Bài viết 1/)).not.toBeInTheDocument()
+  expect(within(card).queryByRole('list', { name: 'Bài viết cung cấp địa điểm' })).not.toBeInTheDocument()
   expect(within(card).queryByText(sources[0].post_content)).not.toBeInTheDocument()
   await user.click(within(card).getByText('Bài viết nguồn (2)'))
   const sourceList = card.querySelector('.location-source-list')
@@ -52,7 +49,7 @@ it('shows missing location once per unknown event and falls back to its event ke
   expect(screen.getAllByText('Chưa có địa điểm được ghi nhận cho sự kiện')).toHaveLength(1)
 })
 
-it('preserves every branch and scopes reused source IDs to each event', () => {
+it('preserves every branch and keeps sources in their event source list', async () => {
   render(<LocationCandidates events={[{
     ...event, locations: [...event.locations, { location_chain: ['Thanh Hóa', 'Việt Nam'], source_ids: ['source-1'] }],
   }, {
@@ -64,11 +61,10 @@ it('preserves every branch and scopes reused source IDs to each event', () => {
   const second = screen.getByRole('region', { name: 'Sự kiện 2' })
   expect(within(first).getByText('Thanh Hóa → miền Trung → Việt Nam')).toBeVisible()
   expect(within(first).getByText('Thanh Hóa → Việt Nam')).toBeVisible()
-  const branches = within(first).getAllByRole('list', { name: 'Bài viết cung cấp địa điểm' })
-  expect(within(branches[1]).getByText(/Bài viết 1/)).toBeVisible()
-  expect(within(branches[1]).queryByText(/Bài viết 2/)).not.toBeInTheDocument()
   expect(within(second).queryByText(/Thanh Hóa →/)).not.toBeInTheDocument()
-  expect(within(within(second).getByRole('list', { name: 'Bài viết cung cấp địa điểm' })).getByRole('link')).toHaveAttribute('href', 'https://example.com/other')
+  await userEvent.setup().click(within(second).getByText('Bài viết nguồn (1)'))
+  expect(within(second).getAllByRole('link')).toHaveLength(1)
+  expect(within(second).getByRole('link')).toHaveAttribute('href', 'https://example.com/other')
 })
 
 it('handles null source fields, rejects unsafe URLs and renders source content as text', async () => {
